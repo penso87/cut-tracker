@@ -37,24 +37,8 @@ code.inline{background:#0b1324;border:1px solid #23314e;border-radius:6px;paddin
 <body>
 <div class="wrap">
   <div class="header">
-    <div><h1>Cut Tracker</h1><div class="sub">מעקב מתמשך לפי תאריכים · Google Sheet live data · התחלה: 4 באוגוסט 2026</div></div>
+    <div><h1>Cut Tracker</h1><div class="sub">מעקב מתמשך לפי תאריכים · Google Sheet live data · התחלה: 4 באוגוסט 2026 <span class="syncstatus">· <span id="statusDot" class="statusdot"></span><span id="syncText">מסנכרן…</span></span></div></div>
     <div class="badge">Day 10 complete</div>
-  </div>
-
-  <div class="panel">
-    <div class="settingsbar">
-      <input id="sheetUrl" type="url" placeholder="הדבק כאן Google Sheet CSV URL שפורסם לציבור">
-      <button id="saveSheetUrl">שמור וחבר</button>
-      <button id="refreshData">רענן עכשיו</button>
-      <span class="syncstatus"><span id="statusDot" class="statusdot"></span><span id="syncText">משתמש בנתונים המובנים</span></span>
-    </div>
-    <div class="setupbox note">
-      <b>חיבור חד-פעמי ל-Google Sheet:</b><br>
-      1. צור Sheet עם שורת הכותרות מה-template המצורף.<br>
-      2. ב-Google Sheets: <b>File → Share → Publish to web</b>, בחר את הגיליון ופורמט CSV.<br>
-      3. הדבק כאן את כתובת ה-CSV ולחץ <b>שמור וחבר</b>.<br>
-      מכאן הטרקר ירענן את הנתונים אוטומטית כל 5 דקות, ובכל פתיחה מחדש.
-    </div>
   </div>
 
   <div class="cards">
@@ -263,22 +247,42 @@ function setStatus(ok,text){
   label.textContent=text;
 }
 
+
+function normalizeSheetUrl(input){
+  const u=(input||'').trim();
+  if(!u) return '';
+  // Already a CSV/export/published URL
+  if(/format=csv|output=csv|\/pub\?/i.test(u)) return u;
+
+  // Normal Google Sheets URL: /spreadsheets/d/{ID}/edit...
+  const m=u.match(/https:\/\/docs\.google\.com\/spreadsheets\/d\/([^\/?#]+)/i);
+  if(m){
+    const id=m[1];
+    let gid='0';
+    const gidMatch=u.match(/[?#&]gid=(\d+)/i);
+    if(gidMatch) gid=gidMatch[1];
+    return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+  }
+  return u;
+}
+
+const HARDCODED_SHEET_CSV='https://docs.google.com/spreadsheets/d/1B4Bn6fFBCCpYor2LNn9iTEIxJoNvhUkN6WxdbQqbNYk/export?format=csv&gid=0';
+
 async function loadSheet(){
-  const url=localStorage.getItem('cutTrackerSheetUrl');
-  if(!url){days=[...fallbackDays];setStatus(null,'משתמש בנתונים המובנים');renderAll();return;}
   try{
     setStatus(null,'מסנכרן…');
-    const bust=(url.includes('?')?'&':'?')+'_ts='+Date.now();
-    const res=await fetch(url+bust,{cache:'no-store'});
-    if(!res.ok)throw new Error('HTTP '+res.status);
+    const url=HARDCODED_SHEET_CSV + '&_ts=' + Date.now();
+    const res=await fetch(url,{cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
     const text=await res.text();
     const loaded=normalizeRows(text);
-    if(!loaded.length)throw new Error('לא נמצאו שורות נתונים');
+    if(!loaded.length) throw new Error('לא נמצאו שורות נתונים');
     days=loaded;
     setStatus(true,'מסונכרן · '+new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}));
     renderAll();
   }catch(e){
-    console.error(e);days=[...fallbackDays];
+    console.error(e);
+    days=[...fallbackDays];
     setStatus(false,'שגיאת סנכרון · מציג fallback');
     renderAll();
   }
@@ -345,14 +349,10 @@ document.querySelectorAll('button[data-metric]').forEach(b=>b.onclick=()=>{docum
 document.getElementById('prevMonth').onclick=()=>shiftMonth(-1);
 document.getElementById('nextMonth').onclick=()=>shiftMonth(1);
 document.getElementById('allMonths').onclick=()=>{showAll=true;updateMonthUI();renderTable();draw()};
-document.getElementById('saveSheetUrl').onclick=()=>{
-  const u=document.getElementById('sheetUrl').value.trim();
   if(u){localStorage.setItem('cutTrackerSheetUrl',u);loadSheet()}
 };
-document.getElementById('refreshData').onclick=loadSheet;
 window.addEventListener('resize',resize);
 
-document.getElementById('sheetUrl').value=localStorage.getItem('cutTrackerSheetUrl')||'';
 loadSheet();
 setInterval(loadSheet,5*60*1000);
 </script>
