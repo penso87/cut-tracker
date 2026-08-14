@@ -1,403 +1,190 @@
 <!doctype html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Cut Tracker</title>
-<style>
-:root{--bg:#09101d;--panel:#121a2f;--line:#2a3655;--text:#eff5ff;--muted:#9fb0ce;--accent:#7dd3fc;--green:#86efac}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#08111f,#0b1020);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
-.wrap{max-width:1240px;margin:auto;padding:28px}.header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px}.header h1{margin:0;font-size:34px}.sub{color:var(--muted);margin-top:6px}
-.badge{padding:8px 12px;border-radius:999px;background:#10243a;border:1px solid #244a6c;color:#c7ecff;font-weight:700}
-.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:22px 0}.card,.panel{background:rgba(18,26,47,.94);border:1px solid var(--line);border-radius:18px;padding:18px}
-.k{font-size:13px;color:var(--muted)}.v{font-size:28px;font-weight:800;margin-top:6px}.small{font-size:12px;color:var(--muted);margin-top:5px}
-.good{color:var(--green);font-weight:800}.panel{margin-bottom:18px}.panel h2{font-size:18px;margin:0 0 14px}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}button{border:1px solid var(--line);background:#0f172a;color:var(--muted);padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer}
-button.active{background:#123451;color:#fff;border-color:#2f6c98}.chart-wrap{height:360px;position:relative}canvas{width:100%;height:100%}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:960px;background:#0f172a}
-th,td{padding:12px;border-bottom:1px solid #202d49;text-align:right;font-size:14px}th{background:#16213a;color:#cbd7ee}.pill{background:#17243e;color:#c6d4ee;border-radius:999px;padding:4px 8px;font-size:12px}
-.note{font-size:13px;line-height:1.6;color:var(--muted)}.footer{text-align:center;color:#7485a5;font-size:12px;margin-top:16px}
-
-.monthbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px}
-.monthnav{display:flex;gap:8px;align-items:center}
-.monthtitle{font-size:18px;font-weight:800}
-.monthhint{font-size:12px;color:var(--muted)}
-
-
-.settingsbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 18px}
-.settingsbar input{flex:1;min-width:280px;background:#0f172a;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.statusdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#64748b;margin-left:6px}
-.statusdot.ok{background:#22c55e}.statusdot.bad{background:#ef4444}
-.syncstatus{font-size:12px;color:var(--muted)}
-.setupbox{background:#0f172a;border:1px dashed #355073;border-radius:14px;padding:14px;margin:12px 0 18px}
-code.inline{background:#0b1324;border:1px solid #23314e;border-radius:6px;padding:2px 6px;color:#cbeafe}
-
-@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.header{flex-direction:column;align-items:flex-start}.wrap{padding:18px}}
-</style>
+<meta name="description" content="מעקב חיתוך אישי · Cut Tracker">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f7fc" media="(prefers-color-scheme: light)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cut Tracker">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="wrap">
-  <div class="header">
-    <div><h1>Cut Tracker</h1><div class="sub">מעקב מתמשך לפי תאריכים · Google Sheet live data · התחלה: 4 באוגוסט 2026 <span class="syncstatus">· <span id="statusDot" class="statusdot"></span><span id="syncText">מסנכרן…</span></span></div></div>
-    <div class="badge">Day 10 complete</div>
-  </div>
 
-  <div class="cards" id="summaryCards">
-    <div class="card"><div class="k">משקל</div><div class="v" id="weightValue">99.3 ק״ג</div><div class="small" id="weightDate">שקילה אחרונה: 9 באוגוסט 2026</div><div class="small" id="weightChange">התחלה 102.6 · <span class="good">−3.3 ק״ג</span></div></div>
-    <div class="card"><div class="k">קלוריות ממוצעות</div><div class="v" id="avgCalories">1,541</div><div class="small">ליום</div></div>
-    <div class="card"><div class="k">חלבון ממוצע</div><div class="v" id="avgProtein">154g</div><div class="small">ליום</div></div>
-    <div class="card"><div class="k">צעדים ממוצעים</div><div class="v" id="avgSteps">13,003</div><div class="small">ליום</div></div>
-    <div class="card"><div class="k">גירעון מצטבר</div><div class="v" id="cumDeficit">13.2–15.3K</div><div class="small">קק״ל · אומדן</div></div>
-  </div>
+  <!-- HEADER -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">CT</div>
+      <div>
+        <h1>Cut Tracker</h1>
+        <div class="sub">מעקב מתמשך · Google Sheet live
+          <span class="syncstatus">· <span id="statusDot" class="statusdot"></span><span id="syncText">מסנכרן…</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button id="refreshBtn" class="btn btn-ghost" title="רענון נתונים"><span class="ico">↻</span> רענון</button>
+      <button id="themeBtn" class="btn btn-ghost" title="מצב תצוגה"><span class="ico" id="themeIco">◐</span></button>
+    </div>
+  </header>
 
-  <div class="panel">
+  <!-- HERO -->
+  <section class="hero panel">
+    <div class="hero-main">
+      <div class="hero-label">משקל נוכחי</div>
+      <div class="hero-weight"><span id="heroWeight">—</span><span class="unit">ק״ג</span></div>
+      <div class="hero-sub" id="heroChange">—</div>
+      <div class="progress">
+        <div class="progress-bar"><div class="progress-fill" id="goalFill"></div></div>
+        <div class="progress-legend">
+          <span id="startLabel">התחלה 102.6</span>
+          <span id="goalPct" class="progress-pct">—</span>
+          <span id="goalLabel">יעד 90.0</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-side">
+      <div class="mini">
+        <div class="mini-k">קצב ירידה</div>
+        <div class="mini-v" id="rateVal">—</div>
+        <div class="mini-s">ק״ג לשבוע</div>
+      </div>
+      <div class="mini">
+        <div class="mini-k">הגעה ליעד</div>
+        <div class="mini-v" id="etaVal">—</div>
+        <div class="mini-s" id="etaSub">אומדן</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAT TILES -->
+  <section class="tiles" id="tiles">
+    <div class="tile"><div class="t-k">קלוריות ממוצעות</div><div class="t-v" id="avgCalories">—</div><div class="t-trend" id="trendCal"></div></div>
+    <div class="tile"><div class="t-k">חלבון ממוצע</div><div class="t-v" id="avgProtein">—</div><div class="t-trend" id="trendProtein"></div></div>
+    <div class="tile"><div class="t-k">צעדים ממוצעים</div><div class="t-v" id="avgSteps">—</div><div class="t-trend" id="trendSteps"></div></div>
+    <div class="tile"><div class="t-k">גירעון מצטבר</div><div class="t-v" id="cumDeficit">—</div><div class="t-s">קק״ל · אומדן</div></div>
+    <div class="tile"><div class="t-k">ציון ממוצע</div><div class="t-v" id="avgScore">—</div><div class="t-trend" id="trendScore"></div></div>
+  </section>
+
+  <!-- INSIGHTS -->
+  <section class="panel">
+    <h2>תובנות</h2>
+    <div class="insights" id="insights">
+      <div class="insight">
+        <div class="in-k">אחזקה מוערכת (TDEE)</div>
+        <div class="in-v" id="tdeeVal">—</div>
+        <div class="in-s" id="tdeeSub">מבוסס על שינוי משקל וקלוריות</div>
+      </div>
+      <div class="insight">
+        <div class="in-k">גירעון יומי אמיתי</div>
+        <div class="in-v" id="realDeficit">—</div>
+        <div class="in-s">אחזקה − צריכה ממוצעת</div>
+      </div>
+      <div class="insight">
+        <div class="in-k">עמידה בחלבון</div>
+        <div class="in-v" id="adhProtein">—</div>
+        <div class="in-s" id="adhProteinSub">מהימים ביעד</div>
+      </div>
+      <div class="insight">
+        <div class="in-k">עמידה בקלוריות</div>
+        <div class="in-v" id="adhCal">—</div>
+        <div class="in-s" id="adhCalSub">מהימים ביעד</div>
+      </div>
+      <div class="insight">
+        <div class="in-k">עמידה בצעדים</div>
+        <div class="in-v" id="adhSteps">—</div>
+        <div class="in-s" id="adhStepsSub">מהימים ביעד</div>
+      </div>
+      <div class="insight">
+        <div class="in-k">רצף ימים מצוינים</div>
+        <div class="in-v" id="streakVal">—</div>
+        <div class="in-s">ציון ≥ 9 ברצף</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHART -->
+  <section class="panel">
     <div class="monthbar">
       <div>
-        <div class="monthtitle" id="monthTitle">אוגוסט 2026</div>
-        <div class="monthhint">ציר הזמן מוצג לפי תאריך, כך שאפשר להמשיך את המעקב גם לאורך חודשים.</div>
+        <div class="monthtitle" id="monthTitle">—</div>
+        <div class="monthhint">ציר הזמן לפי תאריך; אפשר לנווט בין חודשים.</div>
       </div>
       <div class="monthnav">
-        <button id="prevMonth" aria-label="חודש קודם">‹</button>
-        <button id="allMonths">כל התקופה</button>
-        <button id="nextMonth" aria-label="חודש הבא">›</button>
+        <button id="prevMonth" class="btn btn-ghost" aria-label="חודש קודם">‹</button>
+        <button id="allMonths" class="btn btn-ghost">כל התקופה</button>
+        <button id="nextMonth" class="btn btn-ghost" aria-label="חודש הבא">›</button>
       </div>
     </div>
-    <h2>גרף התקדמות</h2>
-    <div class="controls">
-      <button class="active" data-metric="cal">קלוריות</button><button data-metric="protein">חלבון</button>
-      <button data-metric="steps">צעדים</button><button data-metric="active">Active Energy</button>
-      <button data-metric="deficit">גירעון</button><button data-metric="score">ציון</button>
+    <div class="chart-head">
+      <h2>גרף התקדמות</h2>
+      <label class="ma-toggle"><input type="checkbox" id="maToggle"> ממוצע נע 7 ימים</label>
     </div>
-    <div class="chart-wrap"><canvas id="chart"></canvas></div>
-  </div>
+    <div class="controls" id="metricControls">
+      <button class="chip active" data-metric="cal">קלוריות</button>
+      <button class="chip" data-metric="protein">חלבון</button>
+      <button class="chip" data-metric="steps">צעדים</button>
+      <button class="chip" data-metric="active">Active Energy</button>
+      <button class="chip" data-metric="deficit">גירעון</button>
+      <button class="chip" data-metric="score">ציון</button>
+      <button class="chip" data-metric="weight">משקל</button>
+    </div>
+    <div class="chart-wrap"><canvas id="chart"></canvas><div id="tooltip" class="tooltip"></div></div>
+  </section>
 
-  <div class="panel">
+  <!-- WEEKLY ROLLUP -->
+  <section class="panel">
+    <h2>סיכום שבועי</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>שבוע</th><th>ימים</th><th>קלוריות ממוצע</th><th>חלבון ממוצע</th><th>צעדים ממוצע</th><th>גירעון מצטבר</th><th>שינוי משקל</th><th>ציון</th></tr></thead>
+      <tbody id="weeklyBody"></tbody>
+    </table></div>
+  </section>
+
+  <!-- FULL TABLE -->
+  <section class="panel">
     <h2>כל הימים</h2>
     <div class="table-wrap"><table>
       <thead><tr><th>תאריך</th><th>יום</th><th>קלוריות</th><th>חלבון</th><th>צעדים</th><th>אימון / פעילות</th><th>Active Energy</th><th>גירעון משוער</th><th>ציון</th></tr></thead>
       <tbody id="daysTableBody"></tbody>
     </table></div>
-    <p class="note">הנתונים מבוססים על המעקב שלנו בשיחה. בימים שבהם Active Energy היה חלקי, הוא מסומן ללא מספר מלא. הגירעון הוא אומדן ולא מדידה ישירה של איבוד שומן.</p>
-  </div>
+    <p class="note">הנתונים נטענים ישירות מ-Google Sheet. הגירעון הוא אומדן ולא מדידה ישירה של איבוד שומן.</p>
+  </section>
 
-  <div class="panel"><h2>Snapshot</h2><div class="note">
-    ציון ממוצע: <b>9.3/10</b> · ירידה מהתחלה: <b>−3.3 ק״ג</b> · שקילות שומן תאורטית לפי הגירעון: <b>~1.7–2.0 ק״ג</b>.
-  </div></div>
-
-  <div class="panel">
+  <!-- MENU REFERENCE -->
+  <section class="panel">
     <h2>התפריט של גיל</h2>
     <div class="note" style="margin-bottom:14px">התפריט המקורי כפי שניתן בתוכנית, מסודר כאן כ-reference יומי מהיר.</div>
-
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
-      <div class="card">
-        <div class="k">06:30–07:00 · בוקר</div>
-        <div style="font-size:18px;font-weight:800;margin:7px 0">☕ קפה</div>
-        <div class="note">מעט חלב בשביל הצבע. עד קפוצ׳ינו אחד ביום; בשאר הפעמים אמריקנו עם נגיעה של חלב.</div>
-      </div>
-
-      <div class="card">
-        <div class="k">12:00–13:00 · ארוחה עיקרית</div>
-        <div style="font-size:18px;font-weight:800;margin:7px 0">🥩 חלבון + פחמימה + ירק</div>
-        <div class="note">
-          <b>פחמימה:</b> 2 פרוסות לחם מלא / טורטיות / פיתות — סה״כ עד 180 קל׳;<br>
-          או 130 גרם מג׳דרה / אורז;<br>
-          או 190 גרם בטטה על ספריי שמן.<br><br>
-          <b>חלבון:</b> 200 קל׳ מבשר שמכיל לפחות 25g חלבון.<br>
-          <b>ירקות:</b> 1–2 ירקות. אפשר מריחה קלה של חרדל או קטשופ מופחת סוכר.
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="k">בין לבין</div>
-        <div style="font-size:18px;font-weight:800;margin:7px 0">💪 מנת חלבון</div>
-        <div class="note">עד 200 קלוריות ולפחות 25g חלבון. המלצה בתוכנית: QUEST או DAVID.</div>
-      </div>
-
-      <div class="card">
-        <div class="k">17:00–19:00 · ערב</div>
-        <div style="font-size:18px;font-weight:800;margin:7px 0">🍳 ביצים + גבינה + ירקות</div>
-        <div class="note">
-          1 ביצה + 2 לבני ביצה, בכל צורת בישול על ספריי שמן.<br>
-          150 קל׳ מגבינה עם לפחות 15g חלבון — בדרך כלל גבינות 5%.<br>
-          3–4 ירקות.<br>
-          2 כפיות שמן זית <b>או</b> 50 גרם אבוקדו.<br>
-          2 פרוסות לחם מלא / טורטיות / פיתות — סה״כ עד 180 קל׳.
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="k">22:00 · לילה</div>
-        <div style="font-size:18px;font-weight:800;margin:7px 0">🥣 יוגורט + פירות יער + אגוזים</div>
-        <div class="note">
-          יוגורט עם לפחות 20g חלבון ועד 180 קל׳, עם כמה שפחות סוכר.<br>
-          100 גרם פירות יער לבחירה.<br>
-          20 גרם אגוזים / שקדים / קשיו טבעיים.
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="k">אחת לשבוע · מסעדה</div>
-        <div style="font-size:18px;font-weight:800;margin:7px 0">🍽️ אופציית בקר</div>
-        <div class="note">250–300 גרם בקר דל שומן + סלט ירקות + חצי מנה ראשונה חלבונית.</div>
-      </div>
+    <div class="menu-grid">
+      <div class="menucard"><div class="t-k">06:30–07:00 · בוקר</div><div class="menu-title">☕ קפה</div><div class="note">מעט חלב בשביל הצבע. עד קפוצ׳ינו אחד ביום; בשאר הפעמים אמריקנו עם נגיעה של חלב.</div></div>
+      <div class="menucard"><div class="t-k">12:00–13:00 · ארוחה עיקרית</div><div class="menu-title">🥩 חלבון + פחמימה + ירק</div><div class="note"><b>פחמימה:</b> 2 פרוסות לחם מלא / טורטיות / פיתות — עד 180 קל׳; או 130 גרם מג׳דרה / אורז; או 190 גרם בטטה על ספריי שמן.<br><br><b>חלבון:</b> 200 קל׳ מבשר עם לפחות 25g חלבון.<br><b>ירקות:</b> 1–2 ירקות.</div></div>
+      <div class="menucard"><div class="t-k">בין לבין</div><div class="menu-title">💪 מנת חלבון</div><div class="note">עד 200 קלוריות ולפחות 25g חלבון. המלצה: QUEST או DAVID.</div></div>
+      <div class="menucard"><div class="t-k">17:00–19:00 · ערב</div><div class="menu-title">🍳 ביצים + גבינה + ירקות</div><div class="note">1 ביצה + 2 לבני ביצה על ספריי שמן.<br>150 קל׳ מגבינה עם לפחות 15g חלבון — בד״כ 5%.<br>3–4 ירקות. 2 כפיות שמן זית או 50 גרם אבוקדו.<br>עד 180 קל׳ לחם/טורטיות/פיתות.</div></div>
+      <div class="menucard"><div class="t-k">22:00 · לילה</div><div class="menu-title">🥣 יוגורט + פירות יער + אגוזים</div><div class="note">יוגורט עם לפחות 20g חלבון ועד 180 קל׳.<br>100 גרם פירות יער. 20 גרם אגוזים/שקדים/קשיו טבעיים.</div></div>
+      <div class="menucard"><div class="t-k">אחת לשבוע · מסעדה</div><div class="menu-title">🍽️ אופציית בקר</div><div class="note">250–300 גרם בקר דל שומן + סלט ירקות + חצי מנה ראשונה חלבונית.</div></div>
     </div>
-
-    <h3 style="margin:22px 0 10px;font-size:16px">יום שישי</h3>
-    <div class="table-wrap">
-      <table style="min-width:760px">
-        <thead><tr><th>שלב</th><th>מה אוכלים</th></tr></thead>
-        <tbody>
-          <tr><td>בוקר</td><td>קפה + מעט חלב בשביל הצבע</td></tr>
-          <tr><td>12:00–13:00</td><td>עד 180 קל׳ לחם/טורטיות/פיתות + 1 ביצה ו־2 לבנים, או 150 קל׳ גבינה עם לפחות 15g חלבון; תמיד ירקות</td></tr>
-          <tr><td>בין לבין</td><td>מנת חלבון עד 200 קל׳ ולפחות 25g חלבון</td></tr>
-          <tr><td>ארוחת שישי</td><td>3 מנות חלבון דל שומן ככל האפשר (~100g כל אחת) + סלט ירקות + מצקת אחת פחמימה מבושלת + 2–3 כפות סלטים + פרוסת חלה עד גודל טלפון</td></tr>
-          <tr><td>קינוח</td><td>פרי או שניים, או כדור גלידה אחד</td></tr>
-          <tr><td>אלכוהול</td><td>עד 3 כוסות: שליש בירה / כוס יין / שוט משקה</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h3 style="margin:22px 0 10px;font-size:16px">כללים והדגשים מהתוכנית</h3>
+    <h3 class="menu-h3">כללים והדגשים מהתוכנית</h3>
     <div class="note">
       • ארוחה כל 3–4 שעות; השעות עצמן אינן מחייבות.<br>
       • לא לדלג על ארוחות; ארוחה כשעה–שעתיים לפני אימון או מיד אחריו.<br>
       • לפחות 12 כוסות / כ־3 ליטר נוזלים ביום.<br>
       • ללא משקאות ממותקים או מיצי פירות; מים וסודה הם הבסיס.<br>
       • לפחות 7 שעות שינה בלילה.<br>
-      • לנסות להגיע לכ־1 ק״ג ברוקולי או כרובית בשבוע ולשלב כורכום עם מעט פלפל שחור.<br>
+      • כ־1 ק״ג ברוקולי/כרובית בשבוע; כורכום עם מעט פלפל שחור.<br>
       • גלידה: כדור אחד באמצע השבוע ועוד אחד בסופ״ש.
     </div>
-  </div>
+  </section>
 
-  <div class="footer">Self-contained HTML · no external libraries</div>
+  <div class="footer">Self-contained · no external libraries · <span id="lastSync">—</span></div>
 </div>
 
-<script>
-const SHEET_ID='1B4Bn6fFBCCpYor2LNn9iTEIxJoNvhUkN6WxdbQqbNYk';
-const SHEET_GID='0';
-const START_WEIGHT=102.6;
-const fallbackDays=[{"day": 1, "cal_low": 1500, "cal_high": 1600, "protein_low": 150, "protein_high": 150, "steps": 13953, "activity": "—", "active": 861, "def_low": 1300, "def_high": 1300, "score": 9.0, "cal_mid": 1550.0, "protein_mid": 150.0, "date": "2026-08-04"}, {"day": 2, "cal_low": 1500, "cal_high": 1650, "protein_low": 175, "protein_high": 175, "steps": 13966, "activity": "Padel 89 min", "active": 1652, "def_low": 2080, "def_high": 2080, "score": 10.0, "cal_mid": 1575.0, "protein_mid": 175.0, "date": "2026-08-05"}, {"day": 3, "cal_low": 1570, "cal_high": 1590, "protein_low": 165, "protein_high": 165, "steps": 12461, "activity": "Strength ~50 min", "active": 943, "def_low": 1360, "def_high": 1360, "score": 9.5, "cal_mid": 1580.0, "protein_mid": 165.0, "date": "2026-08-06"}, {"day": 4, "cal_low": 1480, "cal_high": 1520, "protein_low": 155, "protein_high": 160, "steps": 15624, "activity": "Padel 53 min", "active": 1217, "def_low": 1720, "def_high": 1720, "score": 9.0, "cal_mid": 1500.0, "protein_mid": 157.5, "date": "2026-08-07"}, {"day": 5, "cal_low": 1505, "cal_high": 1545, "protein_low": 142, "protein_high": 144, "steps": 12188, "activity": "—", "active": null, "def_low": 700, "def_high": 1000, "score": 9.0, "cal_mid": 1525.0, "protein_mid": 143.0, "date": "2026-08-08"}, {"day": 6, "cal_low": 1470, "cal_high": 1560, "protein_low": 144, "protein_high": 150, "steps": 14806, "activity": "—", "active": null, "def_low": 900, "def_high": 1300, "score": 9.5, "cal_mid": 1515.0, "protein_mid": 147.0, "date": "2026-08-09"}, {"day": 7, "cal_low": 1365, "cal_high": 1465, "protein_low": 146, "protein_high": 154, "steps": 10163, "activity": "Bike + Strength", "active": 1049, "def_low": 1550, "def_high": 1900, "score": 9.5, "cal_mid": 1415.0, "protein_mid": 150.0, "date": "2026-08-10"}, {"day": 8, "cal_low": 1525, "cal_high": 1765, "protein_low": 136, "protein_high": 147, "steps": 16193, "activity": "135 min activity", "active": 994, "def_low": 1150, "def_high": 1650, "score": 9.0, "cal_mid": 1645.0, "protein_mid": 141.5, "date": "2026-08-11"}, {"day": 9, "cal_low": 1460, "cal_high": 1680, "protein_low": 154, "protein_high": 167, "steps": 9865, "activity": "Padel ~80 min", "active": 983, "def_low": 1300, "def_high": 1600, "score": 9.5, "cal_mid": 1570.0, "protein_mid": 160.5, "date": "2026-08-12"}, {"day": 10, "cal_low": 1505, "cal_high": 1560, "protein_low": 148, "protein_high": 153, "steps": 10815, "activity": "37 min activity", "active": 578, "def_low": 1100, "def_high": 1400, "score": 9.5, "cal_mid": 1532.5, "protein_mid": 150.5, "date": "2026-08-13"}];
-let days=[...fallbackDays];
-
-const cfg={
-  cal:{label:'קלוריות',key:'cal_mid'},
-  protein:{label:'חלבון',key:'protein_mid'},
-  steps:{label:'צעדים',key:'steps'},
-  active:{label:'Active Energy',key:'active'},
-  deficit:{label:'גירעון',key:null},
-  score:{label:'ציון',key:'score'}
-};
-
-const canvas=document.getElementById('chart');
-const ctx=canvas.getContext('2d');
-let metric='cal';
-let monthCursor='2026-08';
-let showAll=false;
-const heMonths=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
-
-function setStatus(ok,text){
-  const dot=document.getElementById('statusDot');
-  const label=document.getElementById('syncText');
-  if(!dot||!label)return;
-  dot.className='statusdot'+(ok===true?' ok':ok===false?' bad':'');
-  label.textContent=text;
-}
-
-function dateObj(s){const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d)}
-function fmtDate(s){const dt=dateObj(s);return `${dt.getDate()} ${heMonths[dt.getMonth()]} ${dt.getFullYear()}`}
-function fmtShort(s){const dt=dateObj(s);return `${dt.getDate()}/${dt.getMonth()+1}`}
-function monthLabel(key){const [y,m]=key.split('-').map(Number);return `${heMonths[m-1]} ${y}`}
-function currentDays(){return showAll?days:days.filter(d=>d.date&&d.date.startsWith(monthCursor))}
-function vals(data,m){return data.map(d=>m==='deficit'?(d.def_low+d.def_high)/2:d[cfg[m].key])}
-function n(v){if(v===null||v===undefined||v==='')return null;const x=Number(String(v).replace(/,/g,''));return Number.isFinite(x)?x:null}
-
-function gvizCell(cell){
-  if(!cell)return '';
-  if(cell.f!==undefined&&cell.f!==null)return cell.f;
-  if(cell.v===undefined||cell.v===null)return '';
-  if(typeof cell.v==='string')return cell.v;
-  return String(cell.v);
-}
-
-function normalizeDate(v){
-  const s=String(v||'').trim();
-  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
-  // Google may return Date(2026,7,4)
-  const dm=s.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})\)$/);
-  if(dm)return `${dm[1]}-${String(Number(dm[2])+1).padStart(2,'0')}-${String(Number(dm[3])).padStart(2,'0')}`;
-  const d=new Date(s);
-  if(!isNaN(d))return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  return s;
-}
-
-function rowsFromGviz(resp){
-  if(!resp||!resp.table||!resp.table.cols||!resp.table.rows)throw new Error('תגובה לא תקינה מה-Sheet');
-  const headers=resp.table.cols.map(c=>String(c.label||c.id||'').trim());
-  return resp.table.rows.map(r=>{
-    const o={};
-    headers.forEach((h,i)=>o[h]=gvizCell((r.c||[])[i]));
-    return o;
-  }).filter(o=>o.date);
-}
-
-function normalizeRows(raw){
-  return raw.map((o,idx)=>{
-    const cl=n(o.calories_low), ch=n(o.calories_high);
-    const pl=n(o.protein_low), ph=n(o.protein_high);
-    return {
-      date:normalizeDate(o.date),
-      day:n(o.day)??idx+1,
-      weight:n(o.weight),
-      cal_low:cl??0,
-      cal_high:ch??cl??0,
-      cal_mid:((cl??0)+(ch??cl??0))/2,
-      protein_low:pl??0,
-      protein_high:ph??pl??0,
-      protein_mid:((pl??0)+(ph??pl??0))/2,
-      steps:n(o.steps)??0,
-      active:n(o.active_energy),
-      activity:String(o.activity||'—'),
-      def_low:n(o.deficit_low)??0,
-      def_high:n(o.deficit_high)??n(o.deficit_low)??0,
-      score:n(o.score)??0
-    };
-  }).sort((a,b)=>a.date.localeCompare(b.date));
-}
-
-function loadSheet(){
-  setStatus(null,'מסנכרן…');
-  const old=document.getElementById('gviz-loader');
-  if(old)old.remove();
-
-  let finished=false;
-  const timer=setTimeout(()=>{
-    if(finished)return;
-    finished=true;
-    days=[...fallbackDays];
-    setStatus(false,'הסנכרון נכשל · מציג fallback');
-    renderAll();
-  },8000);
-
-  window.handleSheetResponse=function(resp){
-    if(finished)return;
-    finished=true;
-    clearTimeout(timer);
-    try{
-      if(resp.status==='error')throw new Error('Google Sheets error');
-      const loaded=normalizeRows(rowsFromGviz(resp));
-      if(!loaded.length)throw new Error('אין נתונים');
-      days=loaded;
-      setStatus(true,'מסונכרן · '+new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}));
-      renderAll();
-    }catch(e){
-      console.error(e);
-      days=[...fallbackDays];
-      setStatus(false,'שגיאת סנכרון · מציג fallback');
-      renderAll();
-    }
-  };
-
-  const s=document.createElement('script');
-  s.id='gviz-loader';
-  s.async=true;
-  s.onerror=()=>{
-    if(finished)return;
-    finished=true;
-    clearTimeout(timer);
-    days=[...fallbackDays];
-    setStatus(false,'שגיאת גישה ל-Sheet · מציג fallback');
-    renderAll();
-  };
-  s.src=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${SHEET_GID}&tqx=out:json;responseHandler:handleSheetResponse&_=${Date.now()}`;
-  document.head.appendChild(s);
-}
-
-function renderCards(){
-  const validCal=days.filter(d=>Number.isFinite(d.cal_mid));
-  const validPro=days.filter(d=>Number.isFinite(d.protein_mid));
-  const validSteps=days.filter(d=>Number.isFinite(d.steps)&&d.steps>0);
-  const avgCal=validCal.reduce((s,d)=>s+d.cal_mid,0)/Math.max(validCal.length,1);
-  const avgPro=validPro.reduce((s,d)=>s+d.protein_mid,0)/Math.max(validPro.length,1);
-  const avgSteps=validSteps.reduce((s,d)=>s+d.steps,0)/Math.max(validSteps.length,1);
-  const cumLow=days.reduce((s,d)=>s+(d.def_low||0),0);
-  const cumHigh=days.reduce((s,d)=>s+(d.def_high||0),0);
-
-  const weights=days.filter(d=>Number.isFinite(d.weight)).sort((a,b)=>a.date.localeCompare(b.date));
-  const latest=weights.length?weights[weights.length-1]:null;
-  const latestW=latest?latest.weight:99.3;
-  const latestWDate=latest?latest.date:'2026-08-09';
-  const delta=START_WEIGHT-latestW;
-
-  document.getElementById('weightValue').textContent=latestW.toFixed(1)+' ק״ג';
-  document.getElementById('weightDate').textContent='שקילה אחרונה: '+fmtDate(latestWDate);
-  document.getElementById('weightChange').innerHTML=`התחלה ${START_WEIGHT.toFixed(1)} · <span class="good">−${delta.toFixed(1)} ק״ג</span>`;
-  document.getElementById('avgCalories').textContent=Math.round(avgCal).toLocaleString();
-  document.getElementById('avgProtein').textContent=Math.round(avgPro)+'g';
-  document.getElementById('avgSteps').textContent=Math.round(avgSteps).toLocaleString();
-  document.getElementById('cumDeficit').textContent=(cumLow/1000).toFixed(1)+'–'+(cumHigh/1000).toFixed(1)+'K';
-
-  const badge=document.querySelector('.badge');
-  if(badge&&days.length)badge.textContent='Day '+Math.max(...days.map(d=>d.day||0))+' complete';
-}
-
-function renderTable(){
-  const body=document.getElementById('daysTableBody');
-  const data=currentDays();
-  body.innerHTML=data.map(d=>`<tr>
-    <td><b>${fmtDate(d.date)}</b></td><td>${d.day}</td>
-    <td>${Math.round(d.cal_low).toLocaleString()}–${Math.round(d.cal_high).toLocaleString()}</td>
-    <td>${Math.round(d.protein_low)}–${Math.round(d.protein_high)}g</td>
-    <td>${Math.round(d.steps).toLocaleString()}</td><td><span class="pill">${d.activity}</span></td>
-    <td>${d.active==null?'—':Math.round(d.active).toLocaleString()}</td>
-    <td>${Math.round(d.def_low).toLocaleString()}–${Math.round(d.def_high).toLocaleString()}</td>
-    <td>${d.score.toFixed(1)}/10</td></tr>`).join('');
-}
-
-function updateMonthUI(){document.getElementById('monthTitle').textContent=showAll?'כל התקופה':monthLabel(monthCursor)}
-function shiftMonth(delta){
-  const [y,m]=monthCursor.split('-').map(Number);
-  const dt=new Date(y,m-1+delta,1);
-  monthCursor=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
-  showAll=false;updateMonthUI();renderTable();draw();
-}
-function resize(){
-  const r=canvas.getBoundingClientRect(),q=window.devicePixelRatio||1;
-  canvas.width=r.width*q;canvas.height=r.height*q;
-  ctx.setTransform(q,0,0,q,0,0);draw();
-}
-function draw(){
-  const data=currentDays(),w=canvas.clientWidth,h=canvas.clientHeight,p={l:60,r:20,t:26,b:50};
-  ctx.clearRect(0,0,w,h);
-  if(!data.length){ctx.fillStyle='#8ea1c4';ctx.font='14px system-ui';ctx.textAlign='center';ctx.fillText('אין נתונים בחודש הזה',w/2,h/2);return}
-  const a=vals(data,metric),u=a.filter(v=>v!=null&&Number.isFinite(v));
-  if(!u.length)return;
-  let mn=Math.min(...u),mx=Math.max(...u);
-  if(metric==='score'){mn=8.5;mx=10.2}
-  else{const spread=Math.max(1,mx-mn);mn=Math.max(0,mn-spread*.18);mx+=spread*.18}
-  const count=data.length;
-  const X=i=>count===1?w/2:p.l+i*((w-p.l-p.r)/(count-1));
-  const Y=v=>p.t+(mx-v)*(h-p.t-p.b)/(mx-mn);
-  ctx.strokeStyle='#263653';ctx.lineWidth=1;ctx.fillStyle='#8ea1c4';ctx.font='12px system-ui';ctx.textAlign='right';
-  for(let i=0;i<5;i++){const yy=p.t+i*(h-p.t-p.b)/4;ctx.beginPath();ctx.moveTo(p.l,yy);ctx.lineTo(w-p.r,yy);ctx.stroke();const val=mx-i*(mx-mn)/4;ctx.fillText(metric==='steps'?Math.round(val).toLocaleString():Math.round(val),p.l-8,yy+4)}
-  ctx.textAlign='center';data.forEach((d,i)=>ctx.fillText(fmtShort(d.date),X(i),h-18));
-  ctx.beginPath();let started=false;
-  a.forEach((v,i)=>{if(v==null||!Number.isFinite(v))return;if(!started){ctx.moveTo(X(i),Y(v));started=true}else ctx.lineTo(X(i),Y(v))});
-  ctx.strokeStyle='#7dd3fc';ctx.lineWidth=3;ctx.stroke();
-  a.forEach((v,i)=>{if(v==null||!Number.isFinite(v))return;ctx.beginPath();ctx.arc(X(i),Y(v),4.5,0,Math.PI*2);ctx.fillStyle='#e6f7ff';ctx.fill();ctx.strokeStyle='#7dd3fc';ctx.lineWidth=2;ctx.stroke()});
-  ctx.fillStyle='#dce8ff';ctx.textAlign='left';ctx.font='700 13px system-ui';ctx.fillText(cfg[metric].label,p.l,16);
-}
-function renderAll(){renderCards();updateMonthUI();renderTable();resize()}
-
-document.querySelectorAll('button[data-metric]').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('button[data-metric]').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');metric=b.dataset.metric;draw();
-});
-document.getElementById('prevMonth').onclick=()=>shiftMonth(-1);
-document.getElementById('nextMonth').onclick=()=>shiftMonth(1);
-document.getElementById('allMonths').onclick=()=>{showAll=true;updateMonthUI();renderTable();draw()};
-window.addEventListener('resize',resize);
-
-renderAll();
-loadSheet();
-setInterval(loadSheet,5*60*1000);
-</script>
-</body></html>
+<script src="app.js"></script>
+</body>
+</html>
